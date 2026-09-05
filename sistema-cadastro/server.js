@@ -41,7 +41,19 @@ app.get("/usuarios/:id", async (req, res) => {
 })
 
 app.post("/usuarios", async (req, res) => {
-  const { nome, email } = req.body
+  const { nome, email, senha, perfil } = req.body
+
+  const { data, error } = await supabase
+    .from("usuarios")
+    .insert([
+      {
+        nome: nome,
+        email: email,
+        senha: senha,
+        perfil: perfil,
+      },
+    ])
+    .select()
 
   if (!nome || nome.trim() === "") {
     return res.status(400).json({
@@ -55,15 +67,17 @@ app.post("/usuarios", async (req, res) => {
     })
   }
 
-  const { data, error } = await supabase
-    .from("usuarios")
-    .insert([
-      {
-        nome: nome,
-        email: email,
-      },
-    ])
-    .select()
+  if (!senha || senha.trim() === "") {
+    return res.status(400).json({
+      mensagem: "Senha é obrigatória",
+    })
+  }
+
+  if (!perfil || perfil.trim() === "") {
+    return res.status(400).json({
+      mensagem: "Perfil é obrigatório",
+    })
+  }
 
   if (error) {
     return res.status(500).json({
@@ -74,7 +88,14 @@ app.post("/usuarios", async (req, res) => {
 
   return res.status(201).json({
     mensagem: "Usuário criado com sucesso!",
-    usuario: data[0],
+    usuario: {
+      id: data[0].id,
+      nome: data[0].nome,
+      email: data[0].email,
+      perfil: data[0].perfil,
+      status: data[0].status,
+      data_cadastro: data[0].data_cadastro,
+    },
   })
 })
 
